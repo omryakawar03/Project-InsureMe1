@@ -70,8 +70,9 @@ stage view
   - Choose "secret text" as the kind of credentials.
   - Enter your sonarqube token and give the credentials an ID (e.g., "sonar-token").
   - Click "create" to save yourcredentials
+    
+<img width="1470" height="547" alt="Screenshot 2025-12-06 at 3 00 58 PM" src="https://github.com/user-attachments/assets/fd7087d5-acf5-48f6-9e07-4b951f55b88f" />
 
-<img width="1907" height="846" alt="image" src="https://github.com/user-attachments/assets/bcd447f5-4a49-478d-99d6-1379202f4334" />
 
   - Admin->my account->security->generate token
 ![image](https://github.com/user-attachments/assets/26cb309d-aa3c-4a74-873f-9e87b2fcce00)
