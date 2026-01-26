@@ -1,27 +1,9 @@
 ## installation
 
 **Jenkins**
-````
-sudo apt update
-sudo apt install fontconfig openjdk-21-jre  -y
-sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
-  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
-echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-sudo apt-get update
-sudo apt-get install jenkins -y
-````
+- https://www.jenkins.io/download/
 **Docker**
-````
-
-sudo apt-get update
-sudo apt-get install docker.io -y
-sudo systemctl start docker
-sudo usermod -aG docker ubuntu
-newgrp docker
-sudo chmod 777 /var/run/docker.sock
-````
+- https://docs.docker.com/engine/install/ubuntu/
 **SonarQube**
 ````
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
