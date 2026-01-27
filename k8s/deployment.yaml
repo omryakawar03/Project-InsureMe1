@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insureme-deployment
+  namespace: insureme-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insureme
+  template:
+    metadata:
+      labels:
+        app: insureme
+    spec:
+      containers:
+        - name: insureme-container
+          image: omryakawar/insure:latest
+          ports:
+            - containerPort: 8081
+              targetPort: 8089
+       
