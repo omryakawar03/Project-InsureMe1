@@ -1,9 +1,55 @@
 ## installation
 
+### In Jenkins Instance Mandatory Checklist
+```
+aws-cli --version
+docker --version
+terraform version
+trivy --version
+kubectl version --client
+```
+
 ### Jenkins
-- https://www.jenkins.io/download/
+```
+sudo apt update
+sudo apt install fontconfig openjdk-21-jre -y
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins -y
+```
 ### Docker
-- https://docs.docker.com/engine/install/ubuntu/
+```
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+sudo apt update
+```
+
+### docker permissions for jenkins
+```
+sudo usermod -aG docker jenkins
+```
+```
+sudo chmod 666 /var/run/docker.sock
+```
+```
+sudo systemctl restart docker
+sudo systemctl restart jenkins
+```
+
 ### SonarQube
 ````
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
@@ -12,18 +58,17 @@ docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
 ## Step6: Install Required Plugins:
    **Install below plugins**
 
-````
-maven integration
-````
-````
-SonarQube Scanner
-````
-````
-docker
-````
-````
-stage view
-````
+`maven integration`
+`SonarQube Scanner`
+`stage view`
+`terraform`
+`AWS Credentials`
+`docker`
+`Docker Commons`
+`Docker Pipeline`
+`Docker API`
+`docker-build-step`
+
 ## Install  Tools: Manage Jenkins->Tools
    - add SonarQube Scanner: "sonar-scanner"
    - docker: "docker"
@@ -64,6 +109,7 @@ Step5: In Jenkins
        - Sonar-Token
        - Git-Cred
        - Docker-Cred
+       - aws-cred
 
 
 ## Configure Sonar Server: Manage Jenkins->System
@@ -86,12 +132,7 @@ sudo apt-get install trivy -y
 ```
 
 ## Docker Image Build and Push
-- install plugins to use docker
-  `docker`
-  `Docker Commons`
-  `Docker Pipeline`
-  `Docker API`
-  `docker-build-step`
+
 - configure docker credentials in credentials session  
   <img width="1467" height="825" alt="Screenshot 2026-01-27 at 1 13 19 AM" src="https://github.com/user-attachments/assets/2f10de10-5cf7-43a6-b837-06fba3142115" />
 
@@ -101,26 +142,27 @@ pipeline {
     agent any
 
     environment {
+        
         SCANNER_HOME = tool 'sonar-scanner'
-        DOCKER_IMAGE = "mukunddeo9325/insure-me"
+        DOCKER_IMAGE = "omryakawar/insure-me"
     }
 
     stages {
 
-        stage('Code Pull') {
+        stage('1. Code Pull') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/mukundDeo9325/Project-InsureMe1.git'
+                url: 'https://github.com/omryakawar03/Project-InsureMe1.git'
             }
         }
 
-        stage('Code Build') {
+        stage('2. Code Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('3. SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
                     sh '''
@@ -134,7 +176,7 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
+        stage('4. Quality Gate') {
             steps {
                 script {
                     waitForQualityGate abortPipeline: true, credentialsId: 'Sonar-token'
@@ -142,7 +184,7 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Image') {
+        stage('5. Build & Push Docker Image') {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker') {
@@ -156,7 +198,7 @@ pipeline {
             }
         }
 
-        stage('Trivy Image Scan') {
+        stage('6. Trivy Image Scan') {
             steps {
                 sh '''
                 trivy image ${DOCKER_IMAGE}:latest > trivy-report.txt
@@ -164,18 +206,45 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                docker rm -f insure-me || true
-                docker run -d \
-                --name insure-me \
-                -p 8089:8081 \
-                ${DOCKER_IMAGE}:latest
-                '''
-            }
+       stage('7. AWS Configure (eks-profile)') {
+      steps {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+          sh """
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile ${AWS_PROFILE}
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile ${AWS_PROFILE}
+          aws configure set region ${AWS_REGION} --profile ${AWS_PROFILE}
+          aws configure list --profile ${AWS_PROFILE}
+          """
         }
+      }
+    }
+     stage('8. Terraform Apply') {
+      steps {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+          dir("${TF_DIR}") {
+            sh """
+            export AWS_PROFILE=${AWS_PROFILE}
+            terraform init
+            terraform apply -auto-approve
+            """
+          }
+        }
+      }
+    }
+     stage('9. Kubernetes Deploy') {
+      steps {
+         {
+          sh """
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          """
+        }
+      }
+    }
+
+
     }
 }
 ```
-- check your application on `public_ip:8089`
+- check your application on `External-IP:8089`

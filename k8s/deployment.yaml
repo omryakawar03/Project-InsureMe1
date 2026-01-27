@@ -17,4 +17,5 @@ spec:
         - name: insureme-container
           image: omryakawar/insure:latest
           ports:
-            - containerPort: 8089
+            - containerPort: 8081
+              
