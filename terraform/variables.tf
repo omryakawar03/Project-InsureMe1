@@ -45,9 +45,3 @@ variable "node_group_name" {
   type        = string
   default     = "Node_group_Cloud" # You can modify the node group name as needed
 }
-#backend s3 bucket name
-variable "s3_bucket_name" {
-  description = "Name of the S3 bucket for Terraform backend"
-  type        = string
-  default     = "bucket-for-insureme-teraafrom-state-file" # Replace with your actual S3 bucket name make sure the bucket exists
-}
