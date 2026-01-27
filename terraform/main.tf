@@ -101,3 +101,17 @@ resource "aws_eks_node_group" "cluster01" {
     aws_iam_role_policy_attachment.cluster01-AmazonEC2ContainerRegistryReadOnly,
   ]
 }
+resource "aws_ec2_tag" "eks_cluster_tag" {
+  for_each = toset(data.aws_subnets.public.ids)
+
+  resource_id = each.value
+  key         = "kubernetes.io/cluster/${var.cluster_name}"
+  value       = "shared"
+}
+resource "aws_ec2_tag" "eks_elb_tag" {
+  for_each = toset(data.aws_subnets.public.ids)
+
+  resource_id = each.value
+  key         = "kubernetes.io/role/elb"
+  value       = "1"
+}
