@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "aajchaprojecteksvr123hi"
+    bucket = "<YOUR_S3_BUCKET_NAME>"
     key    = "EKS/terraform.tfstate"
     region = "ap-south-1"
     profile = "eks-profile"
