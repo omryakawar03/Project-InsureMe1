@@ -8,6 +8,10 @@ terraform version
 trivy --version
 kubectl version --client
 ```
+### aws cli
+```
+sudo snap install aws-cli --classic
+```
 
 ### Jenkins
 ```
