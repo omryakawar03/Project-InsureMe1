@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: insureme-container
-          image: omryakawar/insure:latest
+          image: mukunddeo9325/insure-me:latest
           ports:
             - containerPort: 8081
               
