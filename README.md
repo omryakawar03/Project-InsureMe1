@@ -145,7 +145,9 @@ sudo apt-get install trivy -y
 ```groovy
 pipeline {
     agent any
-
+    tools{
+    maven 'maven3'
+     }
     environment {
         
         SCANNER_HOME = tool 'sonar-scanner'
