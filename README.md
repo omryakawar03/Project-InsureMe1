@@ -150,6 +150,9 @@ pipeline {
         
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKER_IMAGE = "omryakawar/insure-me"
+        TF_DIR      = "./terraform"
+        AWS_REGION  = "ap-south-1"
+        AWS_PROFILE = "eks-profile"
     }
 
     stages {
